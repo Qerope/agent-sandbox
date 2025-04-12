@@ -10,6 +10,7 @@ def main():
     run = sub.add_parser('run')
     run.add_argument('task')
     run.add_argument('--model', default=os.environ.get('AGENT_MODEL'), required='AGENT_MODEL' not in os.environ)
+    run.add_argument('--max-turns', type=int, default=30)
     args = ap.parse_args()
     runner.run_task(args.task, args.model)
 

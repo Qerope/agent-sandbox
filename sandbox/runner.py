@@ -11,7 +11,7 @@ SYSTEM = 'You are working in a sandboxed checkout of a repository. Use the tools
 def run_task(path, model):
     messages = [{'role': 'user', 'content': open(path + '/prompt.md').read()}]
     work = path + '/repo'
-    for _ in range(100):
+    for turn in range(max_turns):
         resp = client.messages.create(model=model, max_tokens=4096, system=SYSTEM,
                                       tools=TOOLS, messages=messages)
         messages.append({'role': 'assistant', 'content': resp.content})
