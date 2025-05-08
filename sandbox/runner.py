@@ -1,4 +1,7 @@
 import json
+import shutil
+import subprocess
+import tempfile
 import os
 import time
 
@@ -20,9 +23,18 @@ class Trace:
         self.f.write(json.dumps({'t': time.time(), 'kind': kind, **data}) + '\n')
         self.f.flush()
 
-def run_task(path, model):
-    messages = [{'role': 'user', 'content': open(path + '/prompt.md').read()}]
-    work = path + '/repo'
+
+def load_task(path):
+    work = tempfile.mkdtemp(prefix='task-')
+    shutil.copytree(os.path.join(path, 'repo'), work, dirs_exist_ok=True)
+    prompt = open(os.path.join(path, 'prompt.md')).read()
+    return work, prompt, os.path.join(path, 'check.sh')
+
+def run_task(path, model, max_turns=30, max_tokens=200_000, profile='docker'):
+    work, prompt, check = load_task(path)
+    name = os.path.basename(path.rstrip('/'))
+    trace = Trace('traces/%s-%d.jsonl' % (name, int(time.time())))
+    messages = [{'role': 'user', 'content': prompt}]
     for turn in range(max_turns):
         resp = client.messages.create(model=model, max_tokens=4096, system=SYSTEM,
                                       tools=TOOLS, messages=messages)
