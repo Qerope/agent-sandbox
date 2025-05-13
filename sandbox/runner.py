@@ -51,3 +51,7 @@ def run_task(path, model, max_turns=30, max_tokens=200_000, profile='docker'):
         if not results:
             break
         messages.append({'role': 'user', 'content': results})
+
+    r = subprocess.run(['bash', check], cwd=work, capture_output=True, text=True)
+    trace.event('check', passed=r.returncode == 0, output=(r.stdout + r.stderr)[-2000:])
+    return r.returncode == 0
