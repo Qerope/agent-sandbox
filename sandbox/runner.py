@@ -2,6 +2,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 import os
 import time
 
@@ -55,3 +56,9 @@ def run_task(path, model, max_turns=30, max_tokens=200_000, profile='docker'):
     r = subprocess.run(['bash', check], cwd=work, capture_output=True, text=True)
     trace.event('check', passed=r.returncode == 0, output=(r.stdout + r.stderr)[-2000:])
     return r.returncode == 0
+
+
+def run_many(tasks, args):
+    with ThreadPoolExecutor(args.parallel) as pool:
+        futures = [pool.submit(run_task, t, args.model, args.max_turns) for t in tasks]
+        return [f.result() for f in futures]
