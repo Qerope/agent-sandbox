@@ -23,4 +23,7 @@ def run(workdir, cmd, timeout=60):
     except subprocess.TimeoutExpired:
         subprocess.run(['docker', 'kill', name], capture_output=True)
         return Result('', 'timed out after %ds' % timeout, 124, True)
+    except BaseException:
+        subprocess.run(['docker', 'kill', name], capture_output=True)
+        raise
     return Result(tail(p.stdout), tail(p.stderr), p.returncode)
