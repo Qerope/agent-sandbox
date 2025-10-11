@@ -10,6 +10,7 @@ import anthropic
 
 from . import container
 from .tools import TOOLS
+from .tools import apply_patch
 
 client = anthropic.Anthropic()
 SYSTEM = 'You are working in a sandboxed checkout of a repository. Use the tools to complete the task.'
@@ -45,8 +46,11 @@ def run_task(path, model, max_turns=30, max_tokens=200_000, profile='docker'):
         for block in resp.content:
             if block.type != 'tool_use':
                 continue
-            r = container.run(work, block.input['command'])
-            out = r.stdout + r.stderr
+            if block.name == 'apply_patch':
+                out, code = apply_patch(work, block.input['diff'])
+            else:
+                r = (container.run_bwrap if profile == 'bwrap' else container.run)(work, block.input['command'])
+                out, code = r.stdout + r.stderr, r.code
             trace.event('tool', name=block.name, input=block.input, output=out)
             results.append({'type': 'tool_result', 'tool_use_id': block.id, 'content': out})
         if not results:
