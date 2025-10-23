@@ -20,6 +20,8 @@ APPLY_PATCH = {
 
 
 def apply_patch(workdir, diff):
+    if not diff.endswith('\n'):
+        diff += '\n'
     p = subprocess.run(['patch', '-p1', '--batch'], input=diff, cwd=workdir, capture_output=True, text=True)
     return p.stdout + p.stderr, p.returncode
 TOOLS = [BASH, APPLY_PATCH]
