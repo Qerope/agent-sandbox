@@ -4,6 +4,7 @@ import os
 from . import runner
 from . import replay
 from . import report
+from . import view
 
 
 def main():
@@ -18,6 +19,8 @@ def main():
     rp.add_argument('trace')
     rep = sub.add_parser('report')
     rep.add_argument('dir')
+    vw = sub.add_parser('view')
+    vw.add_argument('trace')
     args = ap.parse_args()
     if args.cmd == 'run':
         runner.run_many([args.task], args)
@@ -25,6 +28,8 @@ def main():
         replay.replay(args.trace)
     elif args.cmd == 'report':
         report.report(args.dir)
+    elif args.cmd == 'view':
+        print(view.render(args.trace))
 
 
 if __name__ == '__main__':
