@@ -2,6 +2,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+import threading
 from concurrent.futures import ThreadPoolExecutor
 import os
 import time
@@ -37,10 +38,15 @@ def run_task(path, model, max_turns=30, max_tokens=200_000, profile='docker'):
     name = os.path.basename(path.rstrip('/'))
     trace = Trace('traces/%s-%d.jsonl' % (name, int(time.time())))
     messages = [{'role': 'user', 'content': prompt}]
+    used = 0
     for turn in range(max_turns):
         resp = client.messages.create(model=model, max_tokens=4096, system=SYSTEM,
                                       tools=TOOLS, messages=messages)
         trace.event('response', content=[b.model_dump() for b in resp.content], usage=resp.usage.model_dump())
+        used += resp.usage.input_tokens + resp.usage.output_tokens
+        if used > max_tokens:
+            trace.event('stop', reason='token budget')
+            break
         messages.append({'role': 'assistant', 'content': resp.content})
         results = []
         for block in resp.content:
