@@ -18,6 +18,7 @@ def run(workdir, cmd, timeout=60):
     name = 'sandbox-' + uuid.uuid4().hex[:8]
     args = ['docker', 'run', '--rm', '--name', name]
     args += ['--network', 'none']
+    args += ['--memory', '1g', '--pids-limit', '256']
     args += ['--read-only', '--tmpfs', '/tmp']
     args += ['-v', workdir + ':/work', '-w', '/work', 'python:3.12-slim', 'bash', '-c', cmd]
     try:
