@@ -12,6 +12,7 @@ import anthropic
 from . import container
 from .tools import TOOLS
 from .tools import apply_patch
+import random
 
 client = anthropic.Anthropic()
 SYSTEM = 'You are working in a sandboxed checkout of a repository. Use the tools to complete the task.'
@@ -25,6 +26,16 @@ class Trace:
     def event(self, kind, **data):
         self.f.write(json.dumps({'t': time.time(), 'kind': kind, **data}) + '\n')
         self.f.flush()
+
+
+def create(**kw):
+    for attempt in range(5):
+        try:
+            return client.messages.create(**kw)
+        except anthropic.APIStatusError as e:
+            if e.status_code not in (429, 529) or attempt == 4:
+                raise
+            time.sleep(2 ** attempt + random.random())
 
 
 def load_task(path):
@@ -42,6 +53,7 @@ def run_task(path, model, max_turns=30, max_tokens=200_000, profile='docker'):
     for turn in range(max_turns):
         resp = client.messages.create(model=model, max_tokens=4096, system=SYSTEM,
                                       tools=TOOLS, messages=messages)
+        resp = create(model=model, max_tokens=4096, system=SYSTEM, tools=TOOLS, messages=messages)
         trace.event('response', content=[b.model_dump() for b in resp.content], usage=resp.usage.model_dump())
         used += resp.usage.input_tokens + resp.usage.output_tokens
         if used > max_tokens:
