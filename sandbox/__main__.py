@@ -16,6 +16,7 @@ def main():
     run.add_argument('--max-turns', type=int, default=30)
     run.add_argument('--parallel', type=int, default=1)
     run.add_argument('--max-tokens', type=int, default=200_000)
+    run.add_argument('--profile', choices=['docker', 'bwrap'], default='docker')
     rp = sub.add_parser('replay')
     rp.add_argument('trace')
     rep = sub.add_parser('report')

@@ -30,3 +30,15 @@ def run(workdir, cmd, timeout=60):
         subprocess.run(['docker', 'kill', name], capture_output=True)
         raise
     return Result(tail(p.stdout), tail(p.stderr), p.returncode)
+
+
+def run_bwrap(workdir, cmd, timeout=60):
+    args = ['bwrap', '--ro-bind', '/usr', '/usr', '--symlink', 'usr/bin', '/bin',
+            '--symlink', 'usr/lib', '/lib', '--proc', '/proc', '--dev', '/dev',
+            '--unshare-net', '--unshare-pid', '--bind', workdir, '/work', '--chdir', '/work',
+            'bash', '-c', cmd]
+    try:
+        p = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return Result('', 'timed out after %ds' % timeout, 124, True)
+    return Result(tail(p.stdout), tail(p.stderr), p.returncode)
